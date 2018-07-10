@@ -1,0 +1,190 @@
+﻿@model SuperMarket.WEB.ViewModel.OrderViewModel
+
+@{
+    ViewBag.Title = "Gedera Yana Gaman";
+}
+
+<h3>Add order for @ViewBag.CustomerName</h3>
+@using (Html.BeginForm("GetOrder", "Order", FormMethod.Post, new { @id = "formPost", @CustomerID = @ViewBag.CustomerID, @TotalAmount = "model.ItemTotal" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.HiddenFor(model => model.ProductID, new { id = "Product_ID" })
+    @Html.HiddenFor(model => model.CustomerID, new { id = @ViewBag.CustomerID })
+    @Html.HiddenFor(model => model.TotalAmount, new { id = "TotalOrderAmount" })
+    <hr />
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+    <div class="form-group" id="productFilter">
+        <div class="row" style="padding-left:100px">
+            <div id="wide">
+                <div class="col-md-3">
+                    Select the product :
+                    @Html.EditorFor(model => model.ProductName, new { htmlAttributes = new { @class = "form-control", id = "Product_Name", placeholder = "---Select Product---" } })
+                    @Html.ValidationMessageFor(model => model.ProductName, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="col-md-2">
+                    Unit Price :
+                    @Html.EditorFor(model => model.Price, new { htmlAttributes = new { @class = "form-control", disabled = "disabled", id = "Product_Price" } })
+                    @Html.ValidationMessageFor(model => model.Price, "", new { @class = "text-danger" })
+                </div>
+                <div class="col-md-2">
+                    Quantity :
+                    <input type="text" id="Quantity" class="form-control" oninput="this.value=this.value.replace(/[^0-9]/g,'');" placeholder="Enter Quantity" />
+                </div>
+                <div class="col-md-2">
+                    Total :(Rs.)
+                    @Html.EditorFor(model => model.ItemTotal, new { htmlAttributes = new { @class = "form-control", disabled = "disabled", id = "Total_Amount" } })
+                    @Html.ValidationMessageFor(model => model.ItemTotal, "", new { @class = "text-danger" })
+                </div>
+                <div class="col-md-3" style="padding-top:20px">
+                    <input id="AddLineItem" type="button" class="btn btn-default" value="Add Item" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-12" id="orderItems">
+        <hr />
+        <h3>Order Items</h3>
+        <hr />
+        <table class="table-bordered" id="selected_units" align="center">
+            <thead>
+                <tr class="gridViewHeader">
+                    <th>Id</th>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Total Amount</th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr class="<%= cycle('gridViewclickableRowDialog', 'gridViewAltclickableRowDialog') %>"></tr>
+            </tbody>
+        </table>
+        <table id="selected_units_total" align="center">
+            <tbody>
+                <tr class="gridViewHeader">
+                    <th width="59%">Order Total:</th>
+                    <td width="41%">
+                        Rs.
+                        <label id="orderAmount"></label>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <hr />
+        <input type="submit" class="btn btn-default" value="Save Order" id="btnSave" />
+    </div>
+}
+
+
+@section Scripts {
+    <script src="~/Scripts/common.js"></script>
+    @*<script src="~/Scripts/common.js?v=12"></script>*@
+    <script type="text/javascript">
+        $('#orderItems').hide();
+        $('#Quantity').change(function () {
+            var ItemTotal = 0;
+            ItemTotal = parseInt($("#Product_Price").val()) * parseInt($("#Quantity").val());
+            $('#Total_Amount').val(ItemTotal);
+        });
+        var i = 1;
+        var _OrderTotal = 0;
+        var _product, _quantity, _totalAmount;
+        var _submitStatus = false;
+        //var arr = [];
+
+        $("#AddLineItem").click(function () {
+            $('#orderItems').show();
+            _productID = $("#Product_ID").val();
+            alert(_productID)
+            _product = $("#Product_Name").val();
+            alert(_product)
+            _quantity = parseInt($("#Quantity").val());
+            alert(_quantity)
+            _totalAmount = parseInt($("#Total_Amount").val());
+            alert(_totalAmount)
+            if (_product != "") {
+                if (_quantity <= 10) {
+                    if (_totalAmount <= 200) {
+                        if (_OrderTotal <= 500 && (_OrderTotal + _totalAmount) <= 500) {
+                            _OrderTotal += _totalAmount;
+                            alert(_OrderTotal)
+                            var newrow = '<tr data-id=' + _productID +
+                                ' data-qty=' + _quantity +
+                                ' data-total=' + _totalAmount +
+                                ' ><td>' + _productID +
+                                '</td><td>' + _product +
+                                '</td><td>' + _quantity +
+                                '</td><td>Rs.' + _totalAmount + '</td><td><a class="dlt">Delete</a></td></tr>';
+                            $('#selected_units tr:last').after(newrow);
+                            $('#orderAmount').html(_OrderTotal);
+                            // alert(_OrderTotal)
+                            i++;
+                            //Storing the html table values to local storage
+                            //arr.push(new CustomerOrderInfo(_product, _quantity, _totalAmount))
+                            //localStorage.setItem("OrderData", JSON.stringify(arr));
+
+                            clear();
+                        } else {
+                            bootbox.alert("Total Order Amount is limit to 500!");
+                        }
+                    } else {
+                        bootbox.alert("Item Total Should be less than 200 Rupees");
+                    }
+                } else {
+                    bootbox.alert("Quantity Should be less than 10");
+                }
+            } else {
+                bootbox.alert("Select a Product to Add");
+            }
+        });
+        //localStorage
+        //function CustomerOrderInfo(_product, _quantity, _totalAmount) {
+        //    this.ProductID = _product;
+        //    this.Quantity = _quantity;
+        //    this.LineTotal = _totalAmount;
+        //}
+
+        $(document).on('click', '.dlt', function () {
+            var _deleteLineAmount = $(this).closest("tr").find('td:eq(3)').text();
+            _OrderTotal -= parseInt(_deleteLineAmount.split('.')[1]);
+            $('#orderAmount').html(_OrderTotal);
+            $(this).closest('tr').remove();
+            return false;
+        });
+
+        function clear() {
+            $('#Product_Name').val('');
+            $('#Quantity').val('');
+            $('#Total_Amount').val('');
+            $('#Product_Price').val('');
+        }
+
+        $("#btnSave").on("click", function () {
+            debugger
+            _submitStatus = true;
+            $('#TotalOrderAmount').val(_OrderTotal);
+            var listName = "OrderList";
+            var i = 0;
+            $("#selected_units > tbody > tr").each(function () {
+                var productId = $(this).data("id");
+                var quantity = $(this).data("qty");
+                var lineTotal = $(this).data("total");
+                $("#formPost").prepend("<input type='hidden' name='" + listName + "[" + i + "].ProductID' value='" + productId + "'>");
+                $("#formPost").prepend("<input type='hidden' name='" + listName + "[" + i + "].Quantity' value='" + quantity + "'>");
+                $("#formPost").prepend("<input type='hidden' name='" + listName + "[" + i + "].ItemTotal' value='" + lineTotal + "'>");
+                i += 1;
+                alert(listName)
+            });
+
+            if (_submitStatus == true) {
+                bootbox.alert("Order is Successfully Saved");
+            }
+        });
+    </script>
+}
+
+
+
+

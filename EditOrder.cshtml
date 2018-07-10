@@ -1,0 +1,58 @@
+﻿@model IEnumerable<SuperMarket.DAL.Entities.Order>
+
+@{
+    ViewBag.Title = "EditOrder";
+    var customerName = Model.FirstOrDefault().CustomerOrder.Customer.Name;
+    var customerOrder = Model.FirstOrDefault().CustomerOrder;
+    var count = Model.Count();
+}
+<h3>Edit ordered item details</h3>
+<hr />
+<h4><b>Customer :</b> @customerName</h4>
+<h4><b>Order Total :</b>Rs.@customerOrder.TotalAmount</h4>
+<hr />
+<table class="table-bordered">
+    <tr>
+        <th></th>
+        <th>
+            @Html.DisplayNameFor(model => model.Product.ProductName)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Quantity)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.ItemTotal)
+        </th>
+        @if (count != 1)
+        {
+            <th></th>
+        }
+    </tr>
+    @{ var i = 1;
+        foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @i
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Product.ProductName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Quantity)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ItemTotal)
+                </td>
+                @if (count != 1)
+                {
+                    <td>
+                        @Html.ActionLink("Delete", "DeleteOrderItems", "Order", new { id = item.ID, itemtotal = item.ItemTotal, orderTotal = customerOrder.TotalAmount, orderID = customerOrder.ID }, null)
+                    </td>
+                }
+            </tr>
+            i++;
+        }
+    }
+</table>
+@Html.ActionLink("Back to main page", "Index", "Home")
